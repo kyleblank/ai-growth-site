@@ -4,6 +4,7 @@ import bloggers from "../data/bloggers.json";
 import contents from "../data/contents.json";
 import { evaluateAll, COLLECT_RATE_GATE, HOT_SCORE_GATE } from "../lib/algorithm";
 import { fmtNum } from "../lib/format";
+import { sitePath } from "../lib/site";
 
 const scored = evaluateAll(contents, bloggers);
 const picks = scored.filter((s) => s.verdict === "pick");
@@ -11,11 +12,11 @@ const studied = contents.filter((c) => c.status === "done").length;
 const now = new Date().toISOString().slice(0, 10);
 
 const modules = [
-  { href: "/monitor/", title: "博主监控", desc: "按互动系数筛选值得研究的AI内容", icon: "📡" },
-  { href: "/path/", title: "学习路径", desc: "AI学习成长的时间线路线图", icon: "🗺️" },
-  { href: "/notes/", title: "学习笔记", desc: "个人AI学习知识库", icon: "📝" },
-  { href: "/resources/", title: "资源导航", desc: "AI工具、网站、课程收藏", icon: "🧭" },
-  { href: "/career/", title: "职场AI", desc: "Skill收藏与看板生成方法", icon: "💼" },
+  { href: sitePath("/monitor/"), title: "博主监控", desc: "按互动系数筛选值得研究的AI内容", icon: "📡" },
+  { href: sitePath("/path/"), title: "学习路径", desc: "AI学习成长的时间线路线图", icon: "🗺️" },
+  { href: sitePath("/notes/"), title: "学习笔记", desc: "个人AI学习知识库", icon: "📝" },
+  { href: sitePath("/resources/"), title: "资源导航", desc: "AI工具、网站、课程收藏", icon: "🧭" },
+  { href: sitePath("/career/"), title: "职场AI", desc: "Skill收藏与看板生成方法", icon: "💼" },
 ];
 ---
 
@@ -53,7 +54,7 @@ const modules = [
   <section class="mb-8">
     <div class="flex items-baseline justify-between mb-4">
       <h2 class="text-xl font-bold">🔥 值得研究 Top</h2>
-      <a href="/monitor/" class="text-sm text-accent hover:underline">查看全部 →</a>
+      <a href={sitePath("/monitor/")} class="text-sm text-accent hover:underline">查看全部 →</a>
     </div>
     <div class="grid gap-4 md:grid-cols-3">
       {picks.slice(0, 3).map((s) => (

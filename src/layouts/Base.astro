@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { sitePath } from "../lib/site";
 
 interface Props {
   title: string;
@@ -15,11 +16,11 @@ const nav = [
   { href: "/notes/", label: "学习笔记" },
   { href: "/resources/", label: "资源导航" },
   { href: "/career/", label: "职场AI" },
-];
+].map((item) => ({ ...item, href: sitePath(item.href) }));
 
 const current = Astro.url.pathname;
 const isActive = (href: string) =>
-  href === "/" ? current === "/" : current.startsWith(href.replace(/\/$/, ""));
+  href === sitePath("/") ? current === href : current.startsWith(href);
 ---
 
 <!doctype html>
@@ -33,7 +34,7 @@ const isActive = (href: string) =>
   <body class="min-h-screen bg-ink text-txt">
     <header class="sticky top-0 z-10 border-b border-line bg-ink/85 backdrop-blur">
       <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-        <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-wide">
+        <a href={sitePath("/")} class="flex items-center gap-2 text-lg font-bold tracking-wide">
           <span class="text-accent">严博远</span><span>AI成长录</span>
         </a>
         <nav class="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">

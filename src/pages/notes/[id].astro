@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { fmtDate } from "../../lib/format";
+import { sitePath } from "../../lib/site";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
@@ -18,7 +19,7 @@ const { Content } = await render(note);
 <Base title={note.data.title}>
   <article class="mx-auto max-w-3xl">
     <div class="mb-8">
-      <a href="/notes/" class="text-sm text-accent hover:underline">← 返回笔记列表</a>
+      <a href={sitePath("/notes/")} class="text-sm text-accent hover:underline">← 返回笔记列表</a>
       <h1 class="mt-4 text-3xl font-bold">{note.data.title}</h1>
       <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-dim">
         <span class={note.data.status === "done" ? "text-good" : "text-mid"}>
