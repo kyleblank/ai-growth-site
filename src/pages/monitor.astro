@@ -1,0 +1,168 @@
+---
+import Base from "../layouts/Base.astro";
+import bloggers from "../data/bloggers.json";
+import contents from "../data/contents.json";
+import { evaluateAll, WEIGHTS, COLLECT_RATE_GATE, HOT_SCORE_GATE, WINDOW_DAYS } from "../lib/algorithm";
+import { fmtNum } from "../lib/format";
+
+const scored = evaluateAll(contents, bloggers);
+const picks = scored.filter((s) => s.verdict === "pick");
+const skips = scored.filter((s) => s.verdict !== "pick");
+const platformName = { douyin: "抖音", xhs: "小红书" } as const;
+const now = new Date().toISOString().slice(0, 10);
+---
+
+<Base title="博主监控" description="按互动系数两层筛选值得研究的AI博主内容">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold mb-2">📡 博主监控</h1>
+    <p class="text-sm text-dim">
+      只收录近 {WINDOW_DAYS} 天内容，用两层规则筛出「值得研究」——数据截至 {now}。
+    </p>
+  </div>
+
+  <!-- 博主卡片 -->
+  <section class="mb-8 grid gap-4">
+    {bloggers.map((b) => (
+      <div class="rounded-xl border border-line bg-panel p-5">
+        <div class="flex flex-wrap items-center gap-3 mb-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full border border-accent/40 bg-panel-2 text-lg font-bold text-accent">
+            {b.name.slice(0, 1)}
+          </div>
+          <div>
+            <div class="flex items-center gap-2 font-bold">
+              {b.name}
+              <span class="rounded-full bg-panel-2 px-2 py-0.5 text-xs text-dim">
+                {platformName[b.platform]}
+              </span>
+            </div>
+            <div class="text-sm text-dim">{b.focus} · 粉丝 {fmtNum(b.followers)}</div>
+          </div>
+          {b.homepage && (
+            <a
+              href={b.homepage}
+              target="_blank"
+              rel="noopener"
+              class="ml-auto rounded-lg border border-line px-3 py-1.5 text-xs text-dim transition-colors hover:border-accent/60 hover:text-accent"
+            >
+              主页 ↗
+            </a>
+          )}
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+          <div class="rounded-lg bg-panel-2 px-3 py-2">
+            <span class="text-dim">基线·点赞 </span><span class="font-mono">{fmtNum(b.baseline.like)}</span>
+          </div>
+          <div class="rounded-lg bg-panel-2 px-3 py-2">
+            <span class="text-dim">基线·评论 </span><span class="font-mono">{fmtNum(b.baseline.comment)}</span>
+          </div>
+          <div class="rounded-lg bg-panel-2 px-3 py-2">
+            <span class="text-dim">基线·收藏 </span><span class="font-mono">{fmtNum(b.baseline.collect)}</span>
+          </div>
+          <div class="rounded-lg bg-panel-2 px-3 py-2">
+            <span class="text-dim">基线·转发 </span><span class="font-mono">{fmtNum(b.baseline.share)}</span>
+          </div>
+        </div>
+      </div>
+    ))}
+  </section>
+
+  <!-- 值得研究 -->
+  <section class="mb-8">
+    <h2 class="text-xl font-bold mb-4">
+      ✅ 值得研究 <span class="text-sm font-normal text-accent">{picks.length} 条</span>
+    </h2>
+    <div class="grid gap-4">
+      {picks.map((s, i) => (
+        <div class="rounded-xl border border-accent/30 bg-panel p-5">
+          <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
+            <span class="rounded-full border border-accent/40 px-2 py-0.5 font-mono text-accent">
+              #{i + 1} 热度 {s.hotScore?.toFixed(2)}×
+            </span>
+            <span class="rounded-full bg-panel-2 px-2 py-0.5 text-dim">
+              收藏率 {s.collectRate?.toFixed(3)}
+            </span>
+            <span class="text-dim">{s.blogger.name} · {s.content.publishedAt}</span>
+            {s.content.tags.map((t) => (
+              <span class="rounded-full border border-line px-2 py-0.5 text-dim">{t}</span>
+            ))}
+          </div>
+          <a
+            href={s.content.url}
+            target="_blank"
+            rel="noopener"
+            class="block text-lg font-bold leading-snug transition-colors hover:text-accent"
+          >
+            {s.content.title} ↗
+          </a>
+          <div class="mt-3 flex flex-wrap gap-4 text-sm text-dim">
+            <span>👍 {fmtNum(s.content.stats.like)}</span>
+            <span>⭐ {fmtNum(s.content.stats.collect)}</span>
+            <span>💬 {fmtNum(s.content.stats.comment)}</span>
+            <span>🔁 {fmtNum(s.content.stats.share)}</span>
+          </div>
+          <div class="mt-3 rounded-lg bg-panel-2 px-3 py-2 text-xs text-dim">
+            {s.reason}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- 未入选 -->
+  <section class="mb-8">
+    <h2 class="text-xl font-bold mb-4 text-dim">
+      🗂️ 未入选 <span class="text-sm font-normal">{skips.length} 条（已按规则过滤）</span>
+    </h2>
+    <div class="overflow-hidden rounded-xl border border-line">
+      <table class="w-full text-sm">
+        <thead class="bg-panel-2 text-left text-xs text-dim">
+          <tr>
+            <th class="px-4 py-2.5">内容</th>
+            <th class="px-4 py-2.5">发布</th>
+            <th class="px-4 py-2.5">收藏率</th>
+            <th class="hidden px-4 py-2.5 sm:table-cell">热度</th>
+            <th class="hidden px-4 py-2.5 md:table-cell">原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          {skips.map((s) => (
+            <tr class="border-t border-line/60 text-dim">
+              <td class="max-w-64 truncate px-4 py-2.5">
+                <a href={s.content.url} target="_blank" rel="noopener" class="hover:text-accent">
+                  {s.content.title}
+                </a>
+              </td>
+              <td class="whitespace-nowrap px-4 py-2.5">{s.content.publishedAt}</td>
+              <td class="px-4 py-2.5 font-mono">{s.collectRate === null ? "—" : s.collectRate.toFixed(3)}</td>
+              <td class="hidden px-4 py-2.5 font-mono sm:table-cell">
+                {s.hotScore === null ? "—" : s.hotScore.toFixed(2) + "×"}
+              </td>
+              <td class="hidden max-w-72 px-4 py-2.5 text-xs md:table-cell">{s.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 规则说明 -->
+  <section class="rounded-xl border border-line bg-panel p-6 text-sm text-dim leading-relaxed">
+    <h2 class="text-base font-bold text-txt mb-2">⚙️ 筛选规则</h2>
+    <p class="mb-1">
+      <strong class="text-txt">第一层 · 收藏率门槛</strong>（筛干货不筛流量）：收藏÷点赞 ≥
+      {COLLECT_RATE_GATE.douyin}（抖音）/ {COLLECT_RATE_GATE.xhs}（小红书）。点赞成本最低噪音最大，
+      收藏代表「存着以后要用」，是学习型内容的最强信号。
+    </p>
+    <p class="mb-1">
+      <strong class="text-txt">第二层 · 相对热度分</strong>（判断是否超水平发挥）：每项指标先除以该博主近
+      {WINDOW_DAYS} 天基线（中位数），再加权：收藏 {WEIGHTS.collect * 100}% · 评论 {WEIGHTS.comment * 100}%
+      · 转发 {WEIGHTS.share * 100}% · 点赞 {WEIGHTS.like * 100}%，总分 ≥ {HOT_SCORE_GATE}
+      才进值得研究清单。这样小博主的爆款不会被大博主的日常内容淹没。
+    </p>
+    <p>
+      <strong class="text-txt">数据维护</strong>：新数据通过 GitHub 网页编辑 / CSV 导入 /
+      定时抓取脚本（Phase 3）进入 <code class="rounded bg-panel-2 px-1">src/data/contents.json</code>，
+      网站构建时自动重新计算。
+    </p>
+  </section>
+</Base>

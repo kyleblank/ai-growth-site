@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* 科技感深色主题 */
+  --color-ink: #0a0f1a;
+  --color-panel: #101828;
+  --color-panel-2: #16213a;
+  --color-line: #223052;
+  --color-accent: #2ee6d6;
+  --color-accent-2: #7c8fff;
+  --color-txt: #e8eefb;
+  --color-dim: #93a4c3;
+  --color-good: #4ade80;
+  --color-mid: #fbbf24;
+  --color-bad: #f87171;
+}
+
+html {
+  background: var(--color-ink);
+  color: var(--color-txt);
+}
+
+body {
+  font-family: "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}

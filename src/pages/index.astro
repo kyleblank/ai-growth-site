@@ -1,0 +1,116 @@
+---
+import Base from "../layouts/Base.astro";
+import bloggers from "../data/bloggers.json";
+import contents from "../data/contents.json";
+import { evaluateAll, COLLECT_RATE_GATE, HOT_SCORE_GATE } from "../lib/algorithm";
+import { fmtNum } from "../lib/format";
+
+const scored = evaluateAll(contents, bloggers);
+const picks = scored.filter((s) => s.verdict === "pick");
+const studied = contents.filter((c) => c.status === "done").length;
+const now = new Date().toISOString().slice(0, 10);
+
+const modules = [
+  { href: "/monitor/", title: "博主监控", desc: "按互动系数筛选值得研究的AI内容", icon: "📡" },
+  { href: "/path/", title: "学习路径", desc: "AI学习成长的时间线路线图", icon: "🗺️" },
+  { href: "/notes/", title: "学习笔记", desc: "个人AI学习知识库", icon: "📝" },
+  { href: "/resources/", title: "资源导航", desc: "AI工具、网站、课程收藏", icon: "🧭" },
+  { href: "/career/", title: "职场AI", desc: "Skill收藏与看板生成方法", icon: "💼" },
+];
+---
+
+<Base title="首页">
+  <!-- Hero -->
+  <section class="relative overflow-hidden rounded-2xl border border-line bg-panel p-8 mb-8">
+    <div class="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/10 blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-accent-2/10 blur-3xl"></div>
+    <p class="text-sm text-accent mb-2 tracking-widest">PERSONAL AI GROWTH BASE</p>
+    <h1 class="text-3xl sm:text-4xl font-bold mb-3">严博远AI成长录</h1>
+    <p class="text-dim max-w-2xl mb-6">
+      记录AI学习路径，监控优质AI博主的爆款干货，沉淀职场AI运用技能——只研究真正值得学的内容。
+    </p>
+    <div class="flex flex-wrap gap-6 text-sm">
+      <div>
+        <div class="text-2xl font-bold text-accent">{bloggers.length}</div>
+        <div class="text-dim">监控博主</div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-accent">{picks.length}</div>
+        <div class="text-dim">值得研究</div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-accent">{studied}</div>
+        <div class="text-dim">已研究</div>
+      </div>
+      <div>
+        <div class="text-2xl font-bold text-accent">{contents.length}</div>
+        <div class="text-dim">收录内容</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 值得研究 Top -->
+  <section class="mb-8">
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-xl font-bold">🔥 值得研究 Top</h2>
+      <a href="/monitor/" class="text-sm text-accent hover:underline">查看全部 →</a>
+    </div>
+    <div class="grid gap-4 md:grid-cols-3">
+      {picks.slice(0, 3).map((s) => (
+        <a
+          href={s.content.url}
+          target="_blank"
+          rel="noopener"
+          class="group rounded-xl border border-line bg-panel p-5 transition-colors hover:border-accent/60"
+        >
+          <div class="flex items-center gap-2 mb-3 text-xs text-dim">
+            <span class="rounded-full border border-accent/40 px-2 py-0.5 text-accent">
+              热度 {s.hotScore?.toFixed(2)}×
+            </span>
+            <span>{s.blogger.name}</span>
+            <span>·</span>
+            <span>{s.content.publishedAt}</span>
+          </div>
+          <div class="font-medium leading-snug group-hover:text-accent transition-colors mb-3">
+            {s.content.title}
+          </div>
+          <div class="flex gap-4 text-xs text-dim">
+            <span>赞 {fmtNum(s.content.stats.like)}</span>
+            <span>藏 {fmtNum(s.content.stats.collect)}</span>
+            <span>评 {fmtNum(s.content.stats.comment)}</span>
+            <span>转 {fmtNum(s.content.stats.share)}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- 模块导航 -->
+  <section class="mb-8">
+    <h2 class="text-xl font-bold mb-4">📚 栏目导航</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {modules.map((m) => (
+        <a
+          href={m.href}
+          class="group rounded-xl border border-line bg-panel p-5 transition-colors hover:border-accent/60"
+        >
+          <div class="text-2xl mb-2">{m.icon}</div>
+          <div class="font-bold mb-1 group-hover:text-accent transition-colors">{m.title}</div>
+          <div class="text-sm text-dim">{m.desc}</div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- 算法说明 -->
+  <section class="rounded-xl border border-line bg-panel p-6 text-sm text-dim leading-relaxed">
+    <h2 class="text-base font-bold text-txt mb-2">⚙️ 筛选规则（为什么不条条都监控）</h2>
+    <p>
+      第一层<strong class="text-txt">收藏率门槛</strong>：收藏÷点赞
+      ≥ {COLLECT_RATE_GATE.douyin}（抖音）/ {COLLECT_RATE_GATE.xhs}（小红书），过滤流量型内容；
+      第二层<strong class="text-txt">相对热度分</strong>：各指标÷博主基线后加权
+      （收藏40%·评论25%·转发20%·点赞15%），≥ {HOT_SCORE_GATE} 倍才算超出日常水平的爆款干货。
+      数据窗口：近90天。数据截至 {now}。
+    </p>
+  </section>
+</Base>
